@@ -1,9 +1,14 @@
 name: Image Build and Push
 
 on:
-  push: 
+  workflow_dispatch:
     branches:
-      - development
+      - uw3-docker
+  #push: 
+    #branches:
+    #  - development
+  
+  
 
 jobs:
   push-to-dockerhub:
