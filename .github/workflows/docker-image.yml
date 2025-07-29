@@ -2,8 +2,6 @@ name: Image Build and Push
 
 on:
   workflow_dispatch:
-    branches:
-      - uw3-docker
   #push: 
     #branches:
     #  - development
