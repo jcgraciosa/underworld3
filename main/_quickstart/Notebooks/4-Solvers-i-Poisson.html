@@ -65,7 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../Notebooks/5-Solvers.html" rel="next">
+<link href="../Notebooks/5-Solvers-ii-Stokes.html" rel="next">
 <link href="../Notebooks/3-Symbolic_Forms.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -236,17 +236,17 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Notebooks/4-Solvers.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Notebook 4: Poisson Equation</span></a>
+  <a href="../Notebooks/4-Solvers-i-Poisson.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Notebook 4: Poisson Equation</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Notebooks/5-Solvers.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notebook 5: Stokes Equation</span></a>
+  <a href="../Notebooks/5-Solvers-ii-Stokes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notebook 5: Stokes Equation</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Notebooks/6-Timestepping.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notebook 6: Time-dependence</span></a>
+  <a href="../Notebooks/6-Timestepping.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notebook 6: Rayleigh-Bénard Convection (time-stepping example)</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -271,7 +271,7 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#the-poisson-solver" id="toc-the-poisson-solver" class="nav-link active" data-scroll-target="#the-poisson-solver">The Poisson Solver</a></li>
+  <li><a href="#the-poisson-diffusion-solver" id="toc-the-poisson-diffusion-solver" class="nav-link active" data-scroll-target="#the-poisson-diffusion-solver">The Poisson (Diffusion) Solver</a></li>
   <li><a href="#constitutive-models" id="toc-constitutive-models" class="nav-link" data-scroll-target="#constitutive-models">Constitutive Models</a></li>
   <li><a href="#problem-setup" id="toc-problem-setup" class="nav-link" data-scroll-target="#problem-setup">Problem setup</a></li>
   <li><a href="#exercise-4.1" id="toc-exercise-4.1" class="nav-link" data-scroll-target="#exercise-4.1">Exercise 4.1</a></li>
@@ -300,7 +300,8 @@ window.Quarto = {
 </header>
 
 
-<p>In this example, we solve a steady, non-linear, scalar diffusion equation and show how to recover the fluxes.</p>
+<p>Introduces the various solver templates that are available in Underworld, starting with a steady-state diffusion problem. The template requires you to set some constitutive properties and define the unknowns. These are handled through subsitution into symbolic forms and the template equation can be inspected before you need to supply concrete expressions.</p>
+<p>In this example, we solve a steady, non-linear, scalar diffusion equation and show how to recover the fluxes</p>
 <div id="042970c2-ab87-4483-b68c-3fe6b8e633a2" class="cell" data-editable="true" data-quarto-private-1="{&quot;key&quot;:&quot;slideshow&quot;,&quot;value&quot;:{&quot;slide_type&quot;:&quot;&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> underworld3 <span class="im">as</span> uw</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -322,7 +323,7 @@ Mesh # 0: .meshes/uw_simplexbox_minC(0.0, 0.0)_maxC(1.0, 1.0)_csize0.08333333333
 </div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"c866e7da718a4677a808db30bc5c1ac1","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+{"model_id":"abaecb8bca97484fbab83f739374ffcf","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
 </script>
 </div>
 <div class="cell-output cell-output-stdout">
@@ -355,14 +356,16 @@ Use view(1) to view detailed mesh information.
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="vs">r"dTdY"</span>, mesh, <span class="dv">1</span>, degree<span class="op">=</span><span class="dv">2</span>,</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    varsymbol<span class="op">=</span><span class="vs">r"</span><span class="er">\</span><span class="vs">partial T/</span><span class="er">\</span><span class="vs">partial y"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="the-poisson-solver" class="level3">
-<h3 class="anchored">The Poisson Solver</h3>
+<section id="the-poisson-diffusion-solver" class="level3">
+<h3 class="anchored">The Poisson (Diffusion) Solver</h3>
 <p>There are a number of pre-defined <em>solver systems</em> defined in <code>underworld3</code> which are templates for orchestrating the underlying PETSc objects. A solver requires us to define the unknown in the form of <code>meshVariables</code>, provide boundary conditions, a constitutive model, and provide <code>uw.functions</code> to define constitutive properties, and driving terms.</p>
 <p>We will use the <code>Poisson</code> solver for the diffusion equation, and we will use a <code>Projection</code> solver to compute the vertical gradient term.</p>
-<p>The solver classes themselves are documented, so we can figure out what is needed before we define anything:</p>
+<p>The <code>Projection</code> solvers compute the <code>meshVariable</code> representation of the right hand side of the equation (potentially requiring some smoothing to regularise the problem). This is required when computing numerical values of gradients, for example, where the values are often not formally defined on the mesh points of the <code>meshVariable</code>. This can also be used to transfer information from discontinous variables to continuous representations when you need to visualise a field.</p>
+<p>The solver classes themselves (the templates for specific solvers) are separately documented, so we can figure out what is needed before we define anything:</p>
 <div id="4dc10f34-02b3-48cc-9d5c-ecae856d4046" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>uw.systems.Poisson.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display cell-output-markdown">
+<section id="poisson-equation-solver" class="level1 cell-output cell-output-display cell-output-markdown">
+<h1>Poisson Equation Solver</h1>
 <p>This class provides functionality for a discrete representation of the Poisson equation</p>
 <p><span class="math display">\[
 \nabla \cdot
@@ -378,11 +381,12 @@ Use view(1) to view detailed mesh information.
 <li><p><span class="math inline">\(f\)</span> is a volumetric source term</p></li>
 </ul>
 </section>
-</div>
+</section>
 </div>
 <div id="6795df8b-707e-471e-b935-19a15c58d749" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>uw.systems.Projection.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display cell-output-markdown">
+<section id="projection-solver" class="level1 cell-output cell-output-display cell-output-markdown">
+<h1>Projection Solver</h1>
 <p>Solves <span class="math inline">\(u = \tilde{f}\)</span> where <span class="math inline">\(\tilde{f}\)</span> is a function that can be evaluated within an element and <span class="math inline">\(u\)</span> is a <code>meshVariable</code> with associated shape functions. Typically, the projection is used to obtain a continuous representation of a function that is not well defined at the mesh nodes. For example, functions of the spatial derivatives of one or more <code>meshVariable</code> (e.g.&nbsp;components of fluxes) can be mapped to continuous variables with a projection. More broadly it is a projection from one basis to another and its limitations should be evaluated within that context.</p>
 <p>The projection implemented by creating a solver for this problem</p>
 <p><span class="math display">\[
@@ -391,14 +395,14 @@ Use view(1) to view detailed mesh information.
         \color{Maroon}{\underbrace{\Bigl[ u - \tilde{f} \Bigl] }_{\mathbf{h}}} = 0
 \]</span></p>
 <p>Where the term <span class="math inline">\(\mathbf{F}\)</span> provides a smoothing regularization. <span class="math inline">\(\alpha\)</span> can be zero.</p>
-</div>
+</section>
 </div>
 </section>
 <section id="constitutive-models" class="level3">
 <h3 class="anchored" data-anchor-id="constitutive-models">Constitutive Models</h3>
 <p>Most of the solvers require a constitutive model to be provided and its parameters populated. This is to allow flexibility in defining / redefining solvers during a model calculation.</p>
 <p>We need a diffusion model. We can look at the documentation first.</p>
-<div id="96e571d8-68d6-4ebd-8233-f0fa2bebfe27" class="cell" data-execution_count="7">
+<div id="96e571d8-68d6-4ebd-8233-f0fa2bebfe27" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>uw.constitutive_models.DiffusionModel.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display cell-output-markdown">
 <div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DiffusionModel(Constitutive_Model)</span>
@@ -935,7 +939,7 @@ Use view(1) to view detailed mesh information.
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../Notebooks/5-Solvers.html" class="pagination-link" aria-label="Notebook 5: Stokes Equation">
+      <a href="../Notebooks/5-Solvers-ii-Stokes.html" class="pagination-link" aria-label="Notebook 5: Stokes Equation">
         <span class="nav-page-text"><span class="chapter-title">Notebook 5: Stokes Equation</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
