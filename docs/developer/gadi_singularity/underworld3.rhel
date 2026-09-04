@@ -111,6 +111,7 @@ FROM petsc-image as builder
 ARG PYTHON_VERSION="3.12"
 ARG UW3_BRANCH="development"
 ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=""
 
 # root to install with yum
 USER root
@@ -178,7 +179,11 @@ RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osme
 RUN git clone --depth 1 --branch ${UW3_BRANCH} \
     ${UW3_REPO} /tmp/underworld3
 WORKDIR /tmp/underworld3
-RUN pip install --no-build-isolation --no-cache-dir .
+# The clone above is shallow and forks carry no tags, so setuptools-scm has
+# nothing to derive from and would stamp the build 0.0.0. CI passes the real
+# version; unset when empty so a local build keeps setuptools-scm's own logic.
+RUN [ -n "$SETUPTOOLS_SCM_PRETEND_VERSION" ] || unset SETUPTOOLS_SCM_PRETEND_VERSION; \
+    pip install --no-build-isolation --no-cache-dir .
 
 # record 'builder' stage packages used
 RUN python${PYVER} -m pip freeze >/opt/requirements.txt \

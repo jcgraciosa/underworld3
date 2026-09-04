@@ -115,11 +115,20 @@ jobs:
             TAGS="${TAGS},${IMAGE}:latest"
           fi
 
+          # A release tag is the version; anything else gets a PEP440 dev
+          # version carrying the commit, since branch names are not versions.
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            UW3_VERSION="${REF_NAME#v}"
+          else
+            UW3_VERSION="0.0.0.dev0+g${GITHUB_SHA:0:7}"
+          fi
+
           {
             echo "image=${IMAGE}:${DOCKER_TAG}"
             echo "tags=${TAGS}"
             echo "uw3_branch=${REF_NAME}"
             echo "petsc_image=${PETSC_IMAGE}"
+            echo "uw3_version=${UW3_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
           echo "Building ${IMAGE}:${DOCKER_TAG}"
@@ -146,6 +155,7 @@ jobs:
             UW3_BRANCH=${{ steps.meta.outputs.uw3_branch }}
             UW3_REPO=${{ github.server_url }}/${{ github.repository }}.git
             PETSC_IMAGE=${{ steps.meta.outputs.petsc_image }}
+            SETUPTOOLS_SCM_PRETEND_VERSION=${{ steps.meta.outputs.uw3_version }}
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/underworld3-gadi:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/underworld3-gadi:buildcache,mode=max
@@ -200,7 +210,11 @@ jobs:
     permissions:
       packages: write
     steps:
+      # Housekeeping only: a failed prune must not fail a run whose image is
+      # good. The action 404s partway through on user-owned (vs org-owned)
+      # packages, having already deleted what it could.
       - name: Delete old untagged image versions
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           owner: ${{ github.repository_owner }}
