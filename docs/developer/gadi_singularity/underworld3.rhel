@@ -19,7 +19,7 @@
 #
 # To build use podman from the top level underworld didrectory. i.e.
 #  $ podman build .  \
-            --platform linux/amd64 \
+#           --platform linux/amd64 \
 #           --format docker \
 #           --build-arg UW3_BRANCH=xxx \
 #           -t new_image_name \
