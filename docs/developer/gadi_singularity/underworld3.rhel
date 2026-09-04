@@ -31,7 +31,7 @@
 # https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
 ARG PYTHON_VERSION="3.12"
 ARG BASE_IMAGE="quay.io/rockylinux/rockylinux:8.10"
-ARG PETSC_IMAGE="ghcr.io/jcgraciosa/petsc:3.25.0-ompi"
+ARG PETSC_IMAGE="ghcr.io/underworldcode/petsc-gadi:3.25.0-ompi"
 ARG UW3_BRANCH="development"
 
 # 'petsc-image' will be used later on in builder stage COPY command 
@@ -43,8 +43,10 @@ FROM ${PETSC_IMAGE} as petsc-image
 FROM ${BASE_IMAGE} as runtime
 LABEL maintainer="https://github.com/underworldcode/"
 
-# need to repeat ARGS after every FROM 
-ARG PYTHON_VERSION
+# Repeat the DEFAULT, not just the name: bare `ARG PYTHON_VERSION` relies on
+# inheriting the pre-FROM default, which some buildah/podman versions don't —
+# PYVER expands empty and yum then looks for a package called "python-pip".
+ARG PYTHON_VERSION="3.12"
 
 #### Containerfile ENV vars - for all image stages
 ENV LANG=C.UTF-8
@@ -102,8 +104,9 @@ ENV PYTHONPATH=$PYTHONPATH:$PETSC_DIR/lib
 # Stage 2: 'builder'
 ####################
 FROM petsc-image as builder
-ARG PYTHON_VERSION
-ARG UW3_BRANCH
+# defaults repeated deliberately — see the note in the runtime stage
+ARG PYTHON_VERSION="3.12"
+ARG UW3_BRANCH="development"
 
 # root to install with yum
 USER root
@@ -136,9 +139,10 @@ RUN python${PYVER} -m pip install --no-cache-dir \
         psutil \
         typing_extensions \
         xxhash \
+        requests \
         trimesh \
         ipython \
-        jupyterlab \
+        "jupyterlab>=4.3,<5" \
         "ipywidgets<9.0.0" \
         jupyter-server-proxy \
         "trame>=2.5.2" \
