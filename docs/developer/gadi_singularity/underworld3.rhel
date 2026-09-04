@@ -131,6 +131,7 @@ RUN yum install -y\
 # install python build time and runtime requirements here
 RUN python${PYVER} -m pip install --no-cache-dir \
         "setuptools>=75" \
+        "setuptools-scm>=8" \
         "cython>=3.1" \
         "scipy>=1.15" \
         "numpy<2" \
