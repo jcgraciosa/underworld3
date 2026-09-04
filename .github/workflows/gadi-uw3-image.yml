@@ -140,7 +140,10 @@ jobs:
         with:
           context: .
           file: docs/developer/gadi_singularity/underworld3.rhel
-          push: true
+          # Docker v2 media types rather than buildx's OCI default, matching the
+          # podman `--format docker` images already validated on Gadi. Older
+          # Singularity builds read OCI patchily; this removes the variable.
+          outputs: type=image,push=true,oci-mediatypes=false
           # Gadi is x86_64. No arm64: it would need QEMU for no benefit, and the
           # gmsh / vtk-osmesa wheels this image needs are x86_64-only anyway.
           platforms: linux/amd64

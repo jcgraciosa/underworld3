@@ -98,7 +98,8 @@ jobs:
         with:
           context: .
           file: docs/developer/gadi_singularity/petsc.rhel
-          push: true
+          # Docker v2 media types — see the note in gadi-uw3-image.yml.
+          outputs: type=image,push=true,oci-mediatypes=false
           platforms: linux/amd64
           # See the note in gadi-uw3-image.yml — attestations break some
           # `singularity pull` versions.
