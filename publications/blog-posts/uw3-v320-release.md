@@ -7,12 +7,12 @@ description: >-
   shell.
 date: 2026-10-08
 authors:
-  - name: Juan Carlos Graciosa and the Underworld team 
-    orcid: 0000-0000-0000-0000
+  - name: Juan Carlos Graciosa
+    orcid: 0000-0003-0817-354X
     affiliations:
       - Australian National University
 license: CC-BY-4.0
-banner: figures/banner.png
+banner: figures/uw3-v320-banner.png
 keywords:
   - Underworld Code
   - release
@@ -24,11 +24,11 @@ exports:
     origin_url: https://www.underworldcode.org/underworld3-v3-2-0/
     template: ../../templates/pdf
     output: underworld3-v3-2-0.pdf
-    article_id: UWTN 2026-0XX
+    article_id: UWTN 2026-018
     article_version: 1.0.0
     software_version: underworld3 v3.2.0
 ---
-<div class="uwtn-banner"><img src="figures/banner.png" alt=""></div>
+<div class="uwtn-banner"><img src="figures/uw3-v320-banner.png" alt=""></div>
 
 Underworld3 v3.2.0 is out! Ten capabilities are newly announced as supported, seven as preview and one as experimental! 
 
@@ -40,7 +40,7 @@ Underworld3 v3.2.0 is out! Ten capabilities are newly announced as supported, se
 | **Boundary Conditions on Curved Surfaces** | Free-slip and traction conditions using true geometric normals | Supported | [Free-slip boundary conditions on curved boundaries](/boundary-conditions-on-non-planar-boundaries/) · [example: Ex_Stokes_Annulus_Benchmark_Kramer](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/examples/fluid_mechanics/advanced/Ex_Stokes_Annulus_Benchmark_Kramer.py) |
 | **Checkpoint and Restart** | Snapshots, on-disk checkpoints and exact same-mesh reload | Supported | [snapshot-restore](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/snapshot-restore.md) · [create_xdmf](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/beginner/create_xdmf.md) |
 | **Constitutive Models** | Viscous, viscoplastic, viscoelastic-plastic, diffusion and Darcy laws | Supported (VEP failures fixed) | [Constitutive Models in Symbolic Form](/constitutive-models-in-symbolic-form/) · [example: vep-square](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/benchmarks/vep-square.md) |
-| **Geometric Multigrid / FMG Preconditioner** | Geometric full-multigrid preconditioning on refinement meshes | Supported (was Preview) | [Setting Up Full Multigrid](/setting-up-full-multigrid/) · [example: bench_fmg_vs_gamg_velocity_ksp](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/figures/bench_fmg_vs_gamg_velocity_ksp.md) |
+| **Geometric Multigrid / FMG Preconditioner** | Geometric full-multigrid preconditioning on refinement meshes | Supported (was Preview) | [Setting Up Full Multigrid](/setting-up-full-multigrid/) · [benchmark: FMG vs GAMG](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/figures/bench_fmg_vs_gamg_velocity_ksp.md) |
 | **Material History Transport** | Semi-Lagrangian, BDF and Adams-Moulton behind one D/Dt interface | Supported | [systems_ddt](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/api/systems_ddt.md) · [semi-lagrangian-time-integration](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/semi-lagrangian-time-integration.md) · [particle-population-and-materials](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/particle-population-and-materials.md) |
 | **Materials Registry and Distribution** | Separates what a material is from where it is | Supported | [materials](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/api/materials.md) · [example: particle-population-and-materials](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/particle-population-and-materials.md) |
 | **SUPG-Stabilised Transport** | SUPG stabilisation, the default for advection-diffusion and Navier-Stokes | Supported | [eulerian-navier-stokes](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/eulerian-navier-stokes.md) · [eulerian-advection-diffusion](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/eulerian-advection-diffusion.md) · [solvers](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/api/solvers.md) |
@@ -52,7 +52,7 @@ Underworld3 v3.2.0 is out! Ten capabilities are newly announced as supported, se
 | **Point Location and Function Evaluation** | Point location and symbolic evaluation in a distributed mesh | Preview | [Finding Particles in a Distributed, Unstructured Mesh](/finding-particles-in-a-distributed-unstructured-mesh/) · [example: 3-Symbolic_Forms](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/beginner/tutorials/3-Symbolic_Forms.ipynb) |
 | **Prognostic Free Surface** | Surface height relaxing toward stress-derived equilibrium topography | Preview | [Free surface in Underworld](/free-surface-in-underworld/) |
 | **Solver Control and Reporting** | Per-iteration callbacks, convergence reporting and stall detection | Preview | [solver-iteration-callbacks](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/solver-iteration-callbacks.md) |
-| **Transverse-Isotropic Rheology** | Anisotropic viscosity with a director | Preview (one accuracy drift unresolved) | [vep-transverse-isotropy-faults](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/vep-transverse-isotropy-faults.md) · [bench: ti_vep](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/benchmarks/) |
+| **Transverse-Isotropic Rheology** | Anisotropic viscosity with a director | Preview (one accuracy drift unresolved) | [vep-transverse-isotropy-faults](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/vep-transverse-isotropy-faults.md) · [benchmark: bench_ti_vep_harmonic](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/advanced/benchmarks/bench_ti_vep_harmonic.py) |
 | **Geoid and Self-Gravity Response** | Geoid and self-gravity response for spherical shells and annuli | Experimental | [postprocessing](https://github.com/underworldcode/underworld3/blob/v3.2.0/docs/api/postprocessing.md) |
 
 ## A few worth calling out
