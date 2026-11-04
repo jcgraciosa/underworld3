@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - development
+      - feature/petsc-openblas   # TESTING ONLY: remove before the PR
     paths:
       - 'docs/developer/hpc_containers/petsc.hpc'
       - 'petsc-custom/patches/**'
@@ -150,6 +151,24 @@ jobs:
           assert c.size == 2
           assert '${{ matrix.mpi_name }}' in v, v
           "
+
+      # PETSc must resolve the OpenBLAS it built, not the base's distro copy, and that
+      # library must dispatch per CPU and run unthreaded (MPI already owns every core).
+      - name: OpenBLAS linked, DYNAMIC_ARCH, single-threaded
+        run: |
+          docker run --rm ${{ steps.meta.outputs.image }} bash -c '
+            set -e
+            grep -q -- "-lopenblas" /usr/local/lib/petsc/conf/petscvariables
+            ldd /usr/local/lib/libpetsc.so | grep openblas
+            ldd /usr/local/lib/libpetsc.so | grep -q "/usr/local/lib/libopenblas"
+            python -c "
+          import ctypes
+          ob = ctypes.CDLL(\"/usr/local/lib/libopenblas.so.0\")
+          ob.openblas_get_config.restype = ctypes.c_char_p
+          cfg = ob.openblas_get_config().decode()
+          print(cfg)
+          assert \"DYNAMIC_ARCH\" in cfg and \"SINGLE_THREADED\" in cfg, cfg
+          "'
 
       # Housekeeping only; the action 404s partway through on user-owned
       # packages, having already deleted what it could.

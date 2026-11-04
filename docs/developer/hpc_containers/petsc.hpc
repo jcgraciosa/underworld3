@@ -66,6 +66,9 @@ RUN if patch -p1 --dry-run < /tmp/plexfem-internal-boundary-ownership-fix.patch 
     else \
         echo "plexfem patch not applicable, skipping"; \
     fi
+# OpenBLAS, not the reference fblaslapack: MUMPS/ScaLAPACK time is mostly BLAS-3.
+# DYNAMIC_ARCH picks kernels per CPU at run time (else it tunes to the CI runner and can
+# SIGILL on older nodes). TARGET and DYNAMIC_LIST are NumPy's wheel settings.
 RUN python3 ./configure \
         --with-debugging=0 \
         --prefix=/usr/local \
@@ -92,7 +95,8 @@ RUN python3 ./configure \
         "--download-ptscotch=/tmp/scotch.tar.gz" \
         --download-slepc=1 \
         --download-hdf5=1 \
-        --download-fblaslapack=1 \
+        --download-openblas=1 \
+        "--download-openblas-make-options=DYNAMIC_ARCH=1 TARGET=PRESCOTT DYNAMIC_LIST='PRESCOTT NEHALEM SANDYBRIDGE HASWELL SKYLAKEX'" \
         --download-zlib=1 \
         --download-ctetgen=1 \
         --download-triangle=1 \
