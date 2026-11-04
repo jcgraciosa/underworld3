@@ -119,9 +119,13 @@ RUN pip install --no-cache-dir \
         tabulate \
         nbmake \
         lavavu-osmesa
+# .git removed so MANIFEST.in decides UW2's package files: otherwise the setuptools-scm
+# installed for UW3 adds every tracked file, and build_py fails on the `ressources`
+# directory symlink.
 RUN git init -q /tmp/underworld2 \
 &&  git -C /tmp/underworld2 fetch -q --depth 1 ${UW2_REPO} ${UW2_REF} \
-&&  git -C /tmp/underworld2 checkout -q FETCH_HEAD
+&&  git -C /tmp/underworld2 checkout -q FETCH_HEAD \
+&&  rm -rf /tmp/underworld2/.git
 WORKDIR /tmp/underworld2
 # --as-needed (Ubuntu's default already) drops gLucifer's unused libmpi_cxx, which
 # Open MPI 5 no longer ships. cmake/swig are build-only: CMake 4 on users' PATH
