@@ -33,7 +33,7 @@ ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
 # A commit, not a branch: a moving branch would change every UW3 build silently,
 # and the build cache would not notice a new UW2 commit.
 ARG UW2_REPO="https://github.com/jcgraciosa/underworld2.git"
-ARG UW2_REF="542dc2ca2ce9ef998a2cbaceab38f0829f759fc5"
+ARG UW2_REF="c420968bc3a67465866bb04baac8768285f70512"
 
 FROM ${PETSC_IMAGE} AS petsc-image
 
@@ -42,7 +42,7 @@ FROM ${BASE_BUILDER} AS builder
 ARG UW3_BRANCH="development"
 ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
 ARG UW2_REPO="https://github.com/jcgraciosa/underworld2.git"
-ARG UW2_REF="542dc2ca2ce9ef998a2cbaceab38f0829f759fc5"
+ARG UW2_REF="c420968bc3a67465866bb04baac8768285f70512"
 ARG SETUPTOOLS_SCM_PRETEND_VERSION=""
 
 # PETSc and its venv (petsc4py, mpi4py, numpy) come from the PETSc image; the
@@ -56,6 +56,7 @@ ENV PYTHONPATH=$PYTHONPATH:$PETSC_DIR/lib
 # NumPy must stay in petsc.hpc's range: the petsc4py and mpi4py copied in above
 # were compiled against it, and a different major version breaks their ABI.
 # scipy<2 as in pixi.toml; also keeps the interp2d stub Underworld2 imports.
+# pint<0.25 as in pixi.toml (UW3 and UW2 both test against it); unpinned it was 0.26.
 RUN pip install --no-cache-dir \
         "setuptools>=75" \
         "setuptools-scm>=8" \
@@ -63,7 +64,7 @@ RUN pip install --no-cache-dir \
         "scipy>=1.15,<2" \
         "numpy>=2,<2.5" \
         matplotlib \
-        pint \
+        "pint>=0.24,<0.25" \
         pytest \
         jupytext \
         sympy   \
