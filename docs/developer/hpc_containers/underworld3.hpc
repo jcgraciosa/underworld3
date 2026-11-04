@@ -1,12 +1,12 @@
 #####################################################################
-# Underworld3 image — platform-neutral.
+# Underworld3 + Underworld2 image — platform-neutral.
 #
-# Builds UW3 and its Python stack on top of a petsc.hpc image, using the
+# Builds UW3, UW2 and their Python stack on top of a petsc.hpc image, using the
 # matching platform :builder base for the compile. No package manager is
 # called here; see base.rocky-ompi for the contract.
 #
 # Stages:
-#   builder  BASE_BUILDER + PETSc (copied from PETSC_IMAGE) + UW3 stack in /opt/venv
+#   builder  BASE_BUILDER + PETSc (copied from PETSC_IMAGE) + UW3 and UW2 in /opt/venv
 #   final    BASE_RUNTIME + /opt, /usr/local from builder
 #
 # final stands on the bare runtime base, not on PETSC_IMAGE: the builder's /opt
@@ -29,6 +29,11 @@ ARG UW3_BRANCH="development"
 # Overridden by CI to the repository being built, so a fork builds its own
 # branches rather than looking for them upstream.
 ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
+# v2.18.x plus the NumPy 2 / h5py 3 / SciPy fixes, until those are merged upstream.
+# A commit, not a branch: a moving branch would change every UW3 build silently,
+# and the build cache would not notice a new UW2 commit.
+ARG UW2_REPO="https://github.com/jcgraciosa/underworld2.git"
+ARG UW2_REF="542dc2ca2ce9ef998a2cbaceab38f0829f759fc5"
 
 FROM ${PETSC_IMAGE} AS petsc-image
 
@@ -36,6 +41,8 @@ FROM ${BASE_BUILDER} AS builder
 # defaults repeated deliberately — see the note in base.rocky-ompi
 ARG UW3_BRANCH="development"
 ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
+ARG UW2_REPO="https://github.com/jcgraciosa/underworld2.git"
+ARG UW2_REF="542dc2ca2ce9ef998a2cbaceab38f0829f759fc5"
 ARG SETUPTOOLS_SCM_PRETEND_VERSION=""
 
 # PETSc and its venv (petsc4py, mpi4py, numpy) come from the PETSc image; the
@@ -48,11 +55,12 @@ ENV PYTHONPATH=$PYTHONPATH:$PETSC_DIR/lib
 
 # NumPy must stay in petsc.hpc's range: the petsc4py and mpi4py copied in above
 # were compiled against it, and a different major version breaks their ABI.
+# scipy<2 as in pixi.toml; also keeps the interp2d stub Underworld2 imports.
 RUN pip install --no-cache-dir \
         "setuptools>=75" \
         "setuptools-scm>=8" \
         "cython>=3.1" \
-        "scipy>=1.15" \
+        "scipy>=1.15,<2" \
         "numpy>=2,<2.5" \
         matplotlib \
         pint \
@@ -99,6 +107,33 @@ WORKDIR /tmp/underworld3
 RUN [ -n "$SETUPTOOLS_SCM_PRETEND_VERSION" ] || unset SETUPTOOLS_SCM_PRETEND_VERSION; \
     pip install --no-build-isolation --no-cache-dir .
 
+# Underworld2, without Badlands (it pins numpy<2). Its CMake needs CMake 4 and
+# SWIG 4, newer than Rocky 8 ships, so both come from pip; libxml2 from the base.
+# NumPy/SciPy are restated so these installs cannot move them.
+RUN pip install --no-cache-dir \
+        "numpy>=2,<2.5" \
+        "scipy>=1.15,<2" \
+        "cmake>=4" \
+        "swig>=4" \
+        ninja \
+        tabulate \
+        nbmake \
+        lavavu-osmesa
+RUN git init -q /tmp/underworld2 \
+&&  git -C /tmp/underworld2 fetch -q --depth 1 ${UW2_REPO} ${UW2_REF} \
+&&  git -C /tmp/underworld2 checkout -q FETCH_HEAD
+WORKDIR /tmp/underworld2
+# --as-needed (Ubuntu's default already) drops gLucifer's unused libmpi_cxx, which
+# Open MPI 5 no longer ships. cmake/swig are build-only: CMake 4 on users' PATH
+# would reject older projects.
+RUN LDFLAGS="-Wl,--as-needed" pip install --no-build-isolation --no-cache-dir . \
+&&  pip uninstall -y cmake swig
+# Same docs as the old UW2 image (underworld.rhel), gathered for one COPY below.
+RUN mkdir -p /tmp/uw2-docs/UWGeodynamics \
+&&  cp -r docs/examples docs/cheatsheet docs/user_guide docs/test /tmp/uw2-docs/ \
+&&  cp -r docs/UWGeodynamics/examples docs/UWGeodynamics/benchmarks \
+          docs/UWGeodynamics/tutorials /tmp/uw2-docs/UWGeodynamics/
+
 RUN pip freeze > /opt/requirements.txt
 
 #####################################################################
@@ -113,7 +148,7 @@ ENV PETSC_DIR=/usr/local
 ENV PYTHONPATH=$PYTHONPATH:$PETSC_DIR/lib
 
 # jupytext default viewer: text notebooks open as notebooks on double-click.
-RUN mkdir -p $NB_HOME/workspace $NB_HOME/Underworld3/ \
+RUN mkdir -p $NB_HOME/workspace $NB_HOME/Underworld3/ $NB_HOME/Underworld2/ \
 &&  chown $NB_USER:users -R $NB_HOME \
 &&  jupyter-server extension enable --sys-prefix jupyter_server_proxy \
 &&  jupytext-config set-default-viewer
@@ -121,6 +156,7 @@ RUN mkdir -p $NB_HOME/workspace $NB_HOME/Underworld3/ \
 COPY --chown=$NB_USER:users ./docs/examples  $NB_HOME/Underworld3/examples
 COPY --chown=$NB_USER:users ./docs/beginner  $NB_HOME/Underworld3/beginner
 COPY --chown=$NB_USER:users ./docs/advanced  $NB_HOME/Underworld3/advanced
+COPY --from=builder --chown=$NB_USER:users /tmp/uw2-docs $NB_HOME/Underworld2
 
 EXPOSE 8888
 WORKDIR $NB_HOME

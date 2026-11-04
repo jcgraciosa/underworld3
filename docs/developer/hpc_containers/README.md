@@ -1,4 +1,4 @@
-# HPC containers for Underworld3
+# HPC containers for Underworld3 (and Underworld2)
 
 Singularity/Apptainer images for the HPC systems we run on, built by GitHub Actions and
 published to GHCR. Site-specific run instructions (job templates, MPI settings, shared
@@ -14,7 +14,7 @@ One platform base per OS/MPI family; everything above it is shared.
 base.rocky-ompi    Rocky 8.10 + system OpenMPI      -> uw3-base-rocky-ompi:{runtime,builder}     Gadi, Kaiju
 base.ubuntu-mpich  Ubuntu 24.04 + MPICH 3.4.3       -> uw3-base-ubuntu-mpich:{runtime,builder}   Setonix
 petsc.hpc          PETSc from source, on a base     -> petsc-{gadi,setonix}:<version>-{ompi,mpich}
-underworld3.hpc    UW3 + Python stack, on PETSc     -> underworld3-{gadi,setonix}:<branch|tag>
+underworld3.hpc    UW3 + UW2 + Python stack, on PETSc -> underworld3-{gadi,setonix}:<branch|tag>
 ```
 
 `petsc.hpc` and `underworld3.hpc` never call a package manager; they compile against
@@ -49,7 +49,12 @@ gh workflow run hpc-uw3-image.yml -f uw3_branch=v3.1.0 -f image_tag=v3.1.0
 Every build is smoke-tested before anything is pruned: `import underworld3`, the optional
 gmsh/vtk-osmesa stack, and a 2-rank MPI run that asserts the MPI flavour (Open MPI vs
 MPICH) — a silently wrong `libmpi` is the failure that would otherwise only show on a
-compute node.
+compute node. Underworld2 gets the same: imports (`underworld`, `UWGeodynamics`, `lavavu`),
+`pip check`, and a 2-rank Stokes solve.
+
+Underworld2 is built from `UW2_REPO`/`UW2_BRANCH` in `underworld3.hpc` (no Badlands: it
+pins `numpy<2`). Its examples and UWGeodynamics notebooks are in `~/Underworld2`, next to
+`~/Underworld3`.
 
 Retention: the three most recent untagged `underworld3-*` versions are kept (two for
 `petsc-*` and the bases). Tagged images are never pruned.
