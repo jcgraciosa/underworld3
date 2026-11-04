@@ -15,6 +15,7 @@
 #       -f docs/developer/hpc_containers/base.rocky-ompi
 #####################################################################
 
+# Underworld2 (built in underworld3.hpc) supports Python <3.13 only.
 ARG PYTHON_VERSION="3.12"
 ARG OS_IMAGE="quay.io/rockylinux/rockylinux:8.10"
 
@@ -35,6 +36,7 @@ ENV NB_HOME=/home/$NB_USER
 RUN useradd -m -s /bin/bash -N $NB_USER
 
 # mesa/X11: vtk-osmesa and pyvista. gcc-c++: in-place UW3 rebuilds (see header).
+# libxml2: Underworld2.
 RUN yum update -y \
 &&  yum install -y \
         ca-certificates \
@@ -47,6 +49,7 @@ RUN yum update -y \
         python${PYVER}-devel \
         gcc-c++ \
         zlib \
+        libxml2 \
         mesa-libGL \
         mesa-libGLU \
         mesa-libOSMesa \
@@ -74,7 +77,8 @@ ENV PATH=$PYOPT/bin:$PATH
 ENV PYTHONPATH=$PYTHONPATH:$PYOPT/lib/python${PYVER}/site-packages
 
 FROM runtime AS builder
-# flex/bison: PETSc's --download-ptscotch needs them.
+# flex/bison: PETSc's --download-ptscotch needs them. libxml2-devel and
+# pkg-config: Underworld2's CMake build.
 RUN yum install -y \
         wget \
         make \
@@ -86,6 +90,8 @@ RUN yum install -y \
         flex \
         bison \
         zlib-devel \
+        libxml2-devel \
+        pkgconf-pkg-config \
         openmpi-devel \
 &&  yum clean all \
 &&  rm -rf /var/cache/yum

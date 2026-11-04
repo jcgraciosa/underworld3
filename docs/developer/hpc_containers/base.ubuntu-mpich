@@ -14,6 +14,7 @@
 # an ImportError on Setonix, 2026-09-17. Same ABI, smaller API surface.
 #####################################################################
 
+# Underworld2 (built in underworld3.hpc) supports Python <3.13 only.
 ARG PYTHON_VERSION="3.12"
 ARG OS_IMAGE="quay.io/pawsey/mpich-base:3.4.3_ubuntu24.04"
 
@@ -45,6 +46,7 @@ RUN apt-get update \
         python3-pip \
         g++ \
         zlib1g \
+        libxml2 \
         libgl1 \
         libglu1-mesa \
         libosmesa6 \
@@ -84,4 +86,5 @@ RUN apt-get update \
         bison \
         pkg-config \
         zlib1g-dev \
+        libxml2-dev \
 &&  rm -rf /var/lib/apt/lists/*
