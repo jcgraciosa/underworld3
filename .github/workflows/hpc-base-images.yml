@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - development
+      - feature/uw2-hpc-image   # TESTING ONLY: remove before the PR
     paths:
       - 'docs/developer/hpc_containers/base.*'
       - '.github/workflows/hpc-base-images.yml'
@@ -95,6 +96,7 @@ jobs:
             set -e
             for t in mpicc g++ gfortran cmake flex bison patch git wget; do command -v $t >/dev/null || { echo "missing $t"; exit 1; }; done
             mpicc --version | head -1
+            pkg-config --exists libxml-2.0 || { echo "missing libxml2 headers (Underworld2)"; exit 1; }
             python -c "import sys; assert sys.prefix == \"/opt/venv\", sys.prefix; print(sys.version)"'
           docker run --rm ${{ steps.meta.outputs.image }}:runtime bash -c '
             set -e
