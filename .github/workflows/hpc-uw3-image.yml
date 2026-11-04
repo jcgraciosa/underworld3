@@ -13,6 +13,7 @@ on:
     branches:
       - main
       - development
+      - feature/uw2-hpc-image   # TESTING ONLY: remove before the PR
     tags: ['v*']
     paths:
       - 'docs/developer/hpc_containers/underworld3.hpc'
@@ -220,6 +221,44 @@ jobs:
           assert c.size == 2
           assert '${{ matrix.mpi_name }}' in v, v
           print(f'rank {c.rank} of {c.size}, underworld3 {uw.__version__}, {v}')
+          "
+
+      # UWGeodynamics imports LecodeIsostasy (SciPy) and lavavu is installed
+      # without a fallback, so both are imported, not just `underworld`.
+      # UW_NO_USAGE_METRICS: UW2 otherwise posts telemetry on import.
+      - name: Import underworld (UW2), UWGeodynamics, lavavu; pip check
+        run: |
+          docker run --rm -e UW_NO_USAGE_METRICS=1 ${{ steps.meta.outputs.image }} python -c "
+          import underworld, underworld.UWGeodynamics, lavavu, scipy
+          print('underworld', underworld.__version__, 'scipy', scipy.__version__)
+          "
+          docker run --rm ${{ steps.meta.outputs.image }} pip check
+
+      # A small Stokes solve, so UW2's PETSc and MPI linkage is exercised, not
+      # just loaded. Separate from the UW3 run: each initialises PETSc itself.
+      - name: UW2 MPI sanity (2 ranks, Stokes solve, expect ${{ matrix.mpi_name }})
+        run: |
+          docker run --rm -e UW_NO_USAGE_METRICS=1 ${{ steps.meta.outputs.image }} \
+            mpiexec -n 2 python -c "
+          import underworld as uw
+          from underworld import function as fn
+          from mpi4py import MPI
+          mesh = uw.mesh.FeMesh_Cartesian(elementType='Q1/dQ0', elementRes=(16, 16))
+          v = mesh.add_variable(nodeDofCount=2)
+          p = mesh.subMesh.add_variable(nodeDofCount=1)
+          v.data[:] = 0.0
+          p.data[:] = 0.0
+          walls = mesh.specialSets['AllWalls_VertexSet']
+          bc = uw.conditions.DirichletCondition(variable=v, indexSetsPerDof=(walls, walls))
+          stokes = uw.systems.Stokes(v, p, fn_viscosity=1.0, conditions=bc,
+                                     fn_bodyforce=(0.0, fn.coord()[0] - 0.5))
+          uw.systems.Solver(stokes).solve()
+          vv = uw.utils.Integral(fn.math.dot(v, v), mesh).evaluate()[0]
+          lib = MPI.Get_library_version().splitlines()[0]
+          assert uw.mpi.size == 2
+          assert vv > 0.0, vv
+          assert '${{ matrix.mpi_name }}' in lib, lib
+          print(f'rank {uw.mpi.rank} of {uw.mpi.size}, underworld {uw.__version__}, v.v {vv:.3e}, {lib}')
           "
 
       # Only prune once the image is known good — a failed step above stops
