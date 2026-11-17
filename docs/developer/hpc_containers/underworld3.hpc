@@ -43,7 +43,6 @@ ARG UW3_BRANCH="development"
 ARG UW3_REPO="https://github.com/underworldcode/underworld3.git"
 ARG UW2_REPO="https://github.com/jcgraciosa/underworld2.git"
 ARG UW2_REF="c420968bc3a67465866bb04baac8768285f70512"
-ARG SETUPTOOLS_SCM_PRETEND_VERSION=""
 
 # PETSc and its venv (petsc4py, mpi4py, numpy) come from the PETSc image; the
 # compilers from the base. Both venvs were created identically by the base,
@@ -100,6 +99,9 @@ RUN CC=mpicc HDF5_MPI="ON" HDF5_DIR=${PETSC_DIR} \
 RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa \
     || echo "vtk-osmesa not available on this platform, skipping"
 
+# Declared late on purpose: CI changes it every commit, which invalidates every RUN
+# after it. Here that forces a fresh clone but keeps the dependency layers cached.
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=""
 RUN git clone --depth 1 --branch ${UW3_BRANCH} ${UW3_REPO} /tmp/underworld3
 WORKDIR /tmp/underworld3
 # The clone above is shallow and forks carry no tags, so setuptools-scm has
